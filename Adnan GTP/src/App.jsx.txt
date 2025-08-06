@@ -1,0 +1,61 @@
+import { useState } from 'react';
+
+function App() {
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const askGPT = async () => {
+    if (!question.trim()) return;
+    setLoading(true);
+    setAnswer('');
+
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: "آپ ایک مہذب، نرم لہجے والے اردو GPT ہو جو عدنان رشید کی طرح جواب دیتا ہے۔" },
+            { role: "user", content: question }
+          ]
+        })
+      });
+
+      const data = await res.json();
+      setAnswer(data.choices?.[0]?.message?.content || 'جواب حاصل نہ ہو سکا۔');
+    } catch (err) {
+      setAnswer("خرابی پیش آئی۔ دوبارہ کوشش کریں۔");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: "2rem", fontFamily: "sans-serif", direction: "rtl", textAlign: "right" }}>
+      <h1>عدنان GPT</h1>
+      <p>اپنا سوال لکھیں:</p>
+      <input
+        type="text"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem" }}
+      />
+      <button onClick={askGPT} disabled={loading} style={{ padding: "0.5rem 1rem" }}>
+        {loading ? "سوچ رہا ہوں..." : "سوال پوچھیں"}
+      </button>
+      {answer && (
+        <div style={{ marginTop: "1rem", background: "#f0f0f0", padding: "1rem" }}>
+          <strong>جواب:</strong> <p>{answer}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
